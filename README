@@ -8,7 +8,7 @@ SYNOPSIS
      AnyEvent::ReadLine::Gnu->print ("message\n");
 
      # now initialise readline
-     my $rl = new AnyEvent::ReadLine::Gnu prompt => "hi> ", cb => sub {
+     my $rl = new AnyEvent::ReadLine::Gnu prompt => "hi> ", on_line => sub {
         # called for each line entered by the user
         AnyEvent::ReadLine::Gnu->print ("you entered: $_[0]\n");
      };
@@ -56,6 +56,11 @@ DESCRIPTION
             The only mandatory parameter - passes the callback that will
             receive lines that are completed by the user.
 
+            The string will be in locale-encoding (a multibyte character
+            string). For example, in an utf-8 using locale it will be utf-8.
+            There is no portable way known to the author to convert this
+            into e.g. a unicode string.
+
         prompt => $string
             The prompt string to use, defaults to ">".
 
@@ -95,7 +100,7 @@ DESCRIPTION
         Prints the given strings to the terminal, by first hiding the
         readline, printing the message, and showing it again.
 
-        This function cna be called even when readline has never been
+        This function can be called even when readline has never been
         initialised.
 
         The last string should end with a newline.

@@ -10,7 +10,7 @@ AnyEvent::ReadLine::Gnu - event-based interface to Term::ReadLine::Gnu
  AnyEvent::ReadLine::Gnu->print ("message\n");
 
  # now initialise readline
- my $rl = new AnyEvent::ReadLine::Gnu prompt => "hi> ", cb => sub {
+ my $rl = new AnyEvent::ReadLine::Gnu prompt => "hi> ", on_line => sub {
     # called for each line entered by the user
     AnyEvent::ReadLine::Gnu->print ("you entered: $_[0]\n");
  };
@@ -58,7 +58,7 @@ BEGIN {
 
 use base Term::ReadLine::;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 =item $rl = new AnyEvent::ReadLine::Gnu key => value...
 
@@ -83,6 +83,10 @@ The following key-value pairs are supported:
 
 The only mandatory parameter - passes the callback that will receive lines
 that are completed by the user.
+
+The string will be in locale-encoding (a multibyte character string). For
+example, in an utf-8 using locale it will be utf-8. There is no portable
+way known to the author to convert this into e.g. a unicode string.
 
 =item prompt => $string
 
@@ -114,17 +118,30 @@ our ($in, $out);
 our $saved_point;
 our $saved_line;
 
+# we postpone calling the user clalback here because readline
+# still has the input buffer at this point, so calling hide and
+# show might not have the desired effect.
+sub on_line {
+   my $line = shift;
+   my $point = $self->{point};
+
+   AE::postpone sub {
+      $cb->($line, $point);
+   };
+}
+
 sub new {
    my ($class, %arg) = @_;
 
    $in     = $arg{in}  || *STDIN;
    $out    = $arg{out} || *STDOUT;
    $prompt = $arg{prompt} || "> ";
-   $cb     = $arg{on_line};
+   $cb     = $arg{on_line} || $arg{cb}
+      or do { require Carp; Carp::croak ("AnyEvent::ReadLine::Gnu->new on_line callback argument mandatry, but missing") };
 
    $self = $class->SUPER::new ($arg{name} || $0, $in, $out);
 
-   $self->CallbackHandlerInstall ($prompt, $cb);
+   $self->CallbackHandlerInstall ($prompt, \&on_line);
    # set the unadorned prompt
    $self->rl_set_prompt ($prompt);
 
@@ -199,7 +216,7 @@ sub show {
 Prints the given strings to the terminal, by first hiding the readline,
 printing the message, and showing it again.
 
-This function cna be called even when readline has never been initialised.
+This function can be called even when readline has never been initialised.
 
 The last string should end with a newline.
 
