@@ -1,0 +1,106 @@
+NAME
+    AnyEvent::ReadLine::Gnu - event-based interface to Term::ReadLine::Gnu
+
+SYNOPSIS
+     use AnyEvent::ReadLine::Gnu;
+
+     # works always, prints message to stdout
+     AnyEvent::ReadLine::Gnu->print ("message\n");
+
+     # now initialise readline
+     my $rl = new AnyEvent::ReadLine::Gnu prompt => "hi> ", cb => sub {
+        # called for each line entered by the user
+        AnyEvent::ReadLine::Gnu->print ("you entered: $_[0]\n");
+     };
+
+     # asynchronously print something
+     my $t = AE::timer 1, 1, sub {
+        $rl->hide;
+        print "async message 1\n"; # mind the \n
+        $rl->show;
+
+        # the same, but shorter:
+        $rl->print ("async message 2\n");
+     };
+
+     # do other eventy stuff...
+     AE::cv->recv;
+
+DESCRIPTION
+    The Term::ReadLine module family is bizarre (and you are encouraged not
+    to look at its sources unless you want to go blind). It does support
+    event-based operations, somehow, but it's hard to figure out.
+
+    It also has some utility functions for printing messages asynchronously,
+    something that, again, isn't obvious how to do.
+
+    This module has figured it all out for you, once and for all.
+
+    $rl = new AnyEvent::ReadLine::Gnu key => value...
+        Creates a new AnyEvent::ReadLine object.
+
+        Actually, it only configures readline and provides a convenient way
+        to call the show and hide methods, as well as readline methods -
+        this is a singleton.
+
+        The returned object is the standard Term::ReadLine::Gnu object, all
+        methods that are documented (or working) for that module should work
+        on this object.
+
+        Once initialised, this module will also restore the terminal
+        settings on a normal program exit.
+
+        The following key-value pairs are supported:
+
+        on_line => $cb->($string)
+            The only mandatory parameter - passes the callback that will
+            receive lines that are completed by the user.
+
+        prompt => $string
+            The prompt string to use, defaults to ">".
+
+        name => $string
+            The readline application name, defaults to $0.
+
+        in => $glob
+            The input filehandle (should be a glob): defaults to *STDIN.
+
+        out => $glob
+            The output filehandle (should be a glob): defaults to *STDOUT.
+
+    $rl->hide
+    AnyEvent::ReadLine::Gnu->hide
+        These methods *hide* the readline prompt and text. Basically, it
+        removes the readline feedback from your terminal.
+
+        It is safe to call even when AnyEvent::ReadLine::Gnu has not yet
+        been initialised.
+
+        This is immensely useful in an event-based program when you want to
+        output some stuff to the terminal without disturbing the prompt -
+        just "hide" readline, output your thing, then "show" it again.
+
+        Since user input will not be processed while readline is hidden, you
+        should call "show" as soon as possible.
+
+    $rl->show
+    AnyEvent::ReadLine::Gnu->show
+        Undos any hiding. Every call to "hide" has to be followed to a call
+        to "show". The last call will redisplay the readline prompt, current
+        input line and cursor position. Keys entered while the prompt was
+        hidden will be processed again.
+
+    $rl->print ($string, ...)
+    AnyEvent::ReadLine::Gnu->print ($string, ...)
+        Prints the given strings to the terminal, by first hiding the
+        readline, printing the message, and showing it again.
+
+        This function cna be called even when readline has never been
+        initialised.
+
+        The last string should end with a newline.
+
+AUTHOR, CONTACT, SUPPORT
+     Marc Lehmann <schmorp@schmorp.de>
+     http://software.schmorp.de/pkg/AnyEvent-Readline-Gnu.html
+
