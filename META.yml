@@ -21,4 +21,4 @@ requires:
   AnyEvent: 6
   Term::ReadLine::Gnu: 1.2
   common::sense: 3
-version: 0.2
+version: 1.0

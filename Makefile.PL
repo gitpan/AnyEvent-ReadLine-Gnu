@@ -10,6 +10,7 @@ WriteMakefile(
 	           },
     NAME => "AnyEvent::ReadLine::Gnu",
     VERSION_FROM => "Gnu.pm",
+    EXE_FILES => ["bin/rltelnet"],
     PREREQ_PM => {
        common::sense  => 3,
        AnyEvent       => 6,

@@ -58,7 +58,7 @@ BEGIN {
 
 use base Term::ReadLine::;
 
-our $VERSION = '0.2';
+our $VERSION = '1.0';
 
 =item $rl = new AnyEvent::ReadLine::Gnu key => value...
 
@@ -74,6 +74,9 @@ this object.
 
 Once initialised, this module will also restore the terminal settings on a
 normal program exit.
+
+The callback will be installed with the C<CallbackHandlerInstall>, which
+means it handles history expansion and history, among other things.
 
 The following key-value pairs are supported:
 
@@ -141,9 +144,8 @@ sub new {
 
    $self = $class->SUPER::new ($arg{name} || $0, $in, $out);
 
+   $Term::ReadLine::Gnu::Attribs{term_set} = ["", "", "", ""];
    $self->CallbackHandlerInstall ($prompt, \&on_line);
-   # set the unadorned prompt
-   $self->rl_set_prompt ($prompt);
 
    $hidden = 1;
    $self->show;
@@ -242,10 +244,50 @@ END {
 
 =back
 
+=head1 CAVEATS
+
+There are some issues with readline that can be problematic in event-based
+programs:
+
+=over 4
+
+=item blocking I/O
+
+Readline uses blocking terminal I/O. Under most circumstances, this does
+not cause big delays, but ttys have the potential to block programs
+indefinitely (e.g. on XOFF).
+
+=item unexpected disk I/O
+
+By default, readline does filename completion on TAB, and reads its
+config files.
+
+Tab completion can be disabled by calling C<< $rl->unbind_key (9) >>.
+
+=item tty settings
+
+After readline has been initialised, it will mangle the termios tty
+settings. This does not normally affect output very much, but should be
+taken into consideration.
+
+=item output intermixing
+
+Your program might wish to print messages (for example, log messages) to
+STDOUT or STDERR. This will usually cause confusion, unless readline is
+hidden with the hide method.
+
+=back
+
+Oh, and the above list is probably not complete.
+
 =head1 AUTHOR, CONTACT, SUPPORT
 
  Marc Lehmann <schmorp@schmorp.de>
- http://software.schmorp.de/pkg/AnyEvent-Readline-Gnu.html
+ http://software.schmorp.de/pkg/AnyEvent-ReadLine-Gnu.html
+
+=head1 SEE ALSO
+
+L<rltelnet> - a simple tcp_connect-with-readline program using this module.
 
 =cut
 

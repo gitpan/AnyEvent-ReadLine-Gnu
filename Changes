@@ -1,6 +1,9 @@
 Revision history for Perl extension AnyEvent::ReadLine::Gnu
 
-TODO: prompt method, or make prompt a callback, or...
+1.0  Fri May 11 17:37:36 CEST 2012
+        - make sure any readline adornment is off even on first redisplay.
+	- added caveat section.
+        - fix "support" url.
 
 0.2  Thu May 10 23:52:21 CEST 2012
 	- the SYNOPSIS used cb instead of the correct
